@@ -1,6 +1,7 @@
 package com.example.BBA.controller;
 
 import com.example.BBA.dto.booking.*;
+import com.example.BBA.model.User;
 import com.example.BBA.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -9,7 +10,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -23,9 +23,8 @@ public class BookingController {
 
     @PostMapping
     @Operation(summary = "Create a new booking", responses = @ApiResponse(responseCode = "200", description = "Booking created"))
-    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = Long.parseLong(userDetails.getUsername().split(",")[0]);
-        return ResponseEntity.ok(bookingService.createBooking(request, userId));
+    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(bookingService.createBooking(request, user.getId()));
     }
 
     @GetMapping("/{bookingId}")
@@ -36,14 +35,13 @@ public class BookingController {
 
     @PostMapping("/{bookingId}/cancel")
     @Operation(summary = "Cancel a booking", responses = @ApiResponse(responseCode = "200", description = "Booking cancelled"))
-    public ResponseEntity<BookingResponse> cancelBooking(@PathVariable Long bookingId, @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(bookingService.cancelBooking(bookingId, userDetails.getUsername()));
+    public ResponseEntity<BookingResponse> cancelBooking(@PathVariable Long bookingId, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(bookingService.cancelBooking(bookingId, user.getEmail()));
     }
 
     @GetMapping("/history")
     @Operation(summary = "Get booking history for current user", responses = @ApiResponse(responseCode = "200", description = "Booking history"))
-    public ResponseEntity<List<BookingResponse>> getBookingHistory(@AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = Long.parseLong(userDetails.getUsername().split(",")[0]);
-        return ResponseEntity.ok(bookingService.getBookingHistory(userId));
+    public ResponseEntity<List<BookingResponse>> getBookingHistory(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(bookingService.getBookingHistory(user.getId()));
     }
 }

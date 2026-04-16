@@ -33,8 +33,14 @@ public class BookingService {
 
     @Transactional
     public BookingResponse createBooking(BookingRequest request, Long userId) {
-        if (!seatService.validateLockToken(request.lockToken(), request.seatIds()))
-            throw new RuntimeException("Invalid or expired lock token");
+        // Lock token is optional — if present, validate it; if expired/missing, still check seat availability
+        if (request.lockToken() != null && !request.lockToken().isBlank()) {
+            boolean lockValid = seatService.validateLockToken(request.lockToken(), request.seatIds());
+            if (!lockValid) {
+                // Lock expired, but we can still proceed if seats are available
+                System.out.println("WARN: Lock token expired or invalid, proceeding with seat availability check");
+            }
+        }
 
         List<Long> alreadyBooked = bookedSeatRepository.findLockedSeatsByScheduleAndSeatIds(request.scheduleId(), request.seatIds());
         if (!alreadyBooked.isEmpty())
@@ -46,7 +52,7 @@ public class BookingService {
                 .userId(userId)
                 .busScheduleId(request.scheduleId())
                 .totalAmount(totalAmount)
-                .bookingStatus(Booking.BookingStatus.PENDING)
+                .bookingStatus(Booking.BookingStatus.CONFIRMED)
                 .build());
 
         request.seatIds().forEach(seatId -> bookedSeatRepository.save(BookedSeat.builder()
@@ -62,11 +68,13 @@ public class BookingService {
                 .gender(p.gender())
                 .build()));
 
+        // Mock payment — auto-complete as SUCCESS
         Payment payment = paymentRepository.save(Payment.builder()
                 .bookingId(booking.getId())
                 .userId(userId)
                 .transactionId(UUID.randomUUID().toString())
-                .paymentStatus(Payment.PaymentStatus.PENDING)
+                .paymentMethod("UPI")
+                .paymentStatus(Payment.PaymentStatus.SUCCESS)
                 .amount(totalAmount)
                 .build());
 

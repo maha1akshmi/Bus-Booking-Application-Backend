@@ -1,6 +1,7 @@
 package com.example.BBA.controller;
 
 import com.example.BBA.dto.payment.*;
+import com.example.BBA.model.User;
 import com.example.BBA.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -9,7 +10,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,9 +22,8 @@ public class PaymentController {
 
     @PostMapping
     @Operation(summary = "Initiate payment for a booking", responses = @ApiResponse(responseCode = "200", description = "Payment initiated"))
-    public ResponseEntity<PaymentResponse> initiatePayment(@Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = Long.parseLong(userDetails.getUsername().split(",")[0]);
-        return ResponseEntity.ok(paymentService.initiatePayment(request, userId));
+    public ResponseEntity<PaymentResponse> initiatePayment(@Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(paymentService.initiatePayment(request, user.getId()));
     }
 
     @GetMapping("/{paymentId}")
@@ -35,8 +34,8 @@ public class PaymentController {
 
     @PostMapping("/webhook")
     @Operation(summary = "Payment gateway webhook callback", responses = @ApiResponse(responseCode = "200", description = "Webhook processed"))
-    public ResponseEntity<PaymentResponse> handleWebhook(@Valid @RequestBody WebhookRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails != null ? userDetails.getUsername() : "noreply@busbooking.com";
+    public ResponseEntity<PaymentResponse> handleWebhook(@Valid @RequestBody WebhookRequest request, @AuthenticationPrincipal User user) {
+        String email = user != null ? user.getEmail() : "noreply@busbooking.com";
         return ResponseEntity.ok(paymentService.handleWebhook(request, email));
     }
 }

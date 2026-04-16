@@ -9,39 +9,30 @@ import com.example.BBA.repository.BusRepository;
 import com.example.BBA.repository.BusScheduleRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class AdminScheduleService {
-
     private final BusScheduleRepository scheduleRepository;
     private final BusRepository busRepository;
-
     @PersistenceContext
     private EntityManager em;
 
-    public List<ScheduleResponse> getAllSchedules() {
-        return scheduleRepository.findAll().stream().map(this::toResponse).toList();
-    }
+    public AdminScheduleService(BusScheduleRepository scheduleRepository, BusRepository busRepository) { this.scheduleRepository = scheduleRepository; this.busRepository = busRepository; }
 
-    public List<ScheduleResponse> getSchedulesByBus(Long busId) {
-        return scheduleRepository.findByBusId(busId).stream().map(this::toResponse).toList();
-    }
+    public List<ScheduleResponse> getAllSchedules() { return scheduleRepository.findAll().stream().map(this::toResponse).toList(); }
+
+    public List<ScheduleResponse> getSchedulesByBus(Long busId) { return scheduleRepository.findByBusId(busId).stream().map(this::toResponse).toList(); }
 
     @Transactional
     public ScheduleResponse createSchedule(ScheduleRequest req) {
         Bus bus = busRepository.findById(req.busId()).orElseThrow(() -> new RuntimeException("Bus not found with id: " + req.busId()));
-        BusSchedule schedule = new BusSchedule();
-        schedule.setBus(bus);
-        schedule.setJourneyDate(LocalDate.parse(req.journeyDate()));
+        BusSchedule schedule = new BusSchedule(); schedule.setBus(bus); schedule.setJourneyDate(LocalDate.parse(req.journeyDate()));
         return toResponse(scheduleRepository.save(schedule));
     }
 
@@ -54,10 +45,7 @@ public class AdminScheduleService {
     }
 
     @Transactional
-    public void deleteSchedule(Long id) {
-        if (!scheduleRepository.existsById(id)) throw new RuntimeException("Schedule not found with id: " + id);
-        scheduleRepository.deleteById(id);
-    }
+    public void deleteSchedule(Long id) { if (!scheduleRepository.existsById(id)) throw new RuntimeException("Schedule not found with id: " + id); scheduleRepository.deleteById(id); }
 
     @SuppressWarnings("unchecked")
     public DashboardResponse getDashboard() {
@@ -69,11 +57,7 @@ public class AdminScheduleService {
         return new DashboardResponse(totalBuses, totalBookings, totalRevenue, recent);
     }
 
-    private BigDecimal toBigDecimal(Object val) {
-        return val instanceof BigDecimal bd ? bd : new BigDecimal(val.toString());
-    }
+    private BigDecimal toBigDecimal(Object val) { return val instanceof BigDecimal bd ? bd : new BigDecimal(val.toString()); }
 
-    private ScheduleResponse toResponse(BusSchedule s) {
-        return new ScheduleResponse(s.getId(), s.getBus().getId(), s.getBus().getBusName(), s.getJourneyDate(), s.getCreatedAt());
-    }
+    private ScheduleResponse toResponse(BusSchedule s) { return new ScheduleResponse(s.getId(), s.getBus().getId(), s.getBus().getBusName(), s.getJourneyDate(), s.getCreatedAt()); }
 }

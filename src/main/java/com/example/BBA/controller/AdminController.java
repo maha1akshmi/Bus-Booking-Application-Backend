@@ -7,18 +7,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
-@RequiredArgsConstructor
 @Tag(name = "Admin", description = "Admin bus and schedule management")
 public class AdminController {
-
     private final AdminBusService busService;
     private final AdminScheduleService scheduleService;
+
+    public AdminController(AdminBusService busService, AdminScheduleService scheduleService) { this.busService = busService; this.scheduleService = scheduleService; }
 
     @GetMapping("/buses")
     @Operation(summary = "Get all buses", responses = @ApiResponse(responseCode = "200", description = "List of all buses"))
@@ -63,7 +62,4 @@ public class AdminController {
     @GetMapping("/dashboard")
     @Operation(summary = "Get admin dashboard stats", responses = @ApiResponse(responseCode = "200", description = "Dashboard data"))
     public ResponseEntity<?> getDashboard() { return ResponseEntity.ok(scheduleService.getDashboard()); }
-
-    @GetMapping("/dashboard")
-    @Operation(summary="Get admin dashboard stats",responses=@ApiResponse(responseCode="200",description="Dashboard data"))
 }
